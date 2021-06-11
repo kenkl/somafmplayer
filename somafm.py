@@ -5,11 +5,17 @@ from volumecontroller import *
 import subprocess, json
 
 streams = {
-    'DroneZone': 'https://somafm.com/dronezone256.pls', 
+    'DroneZone': 'https://somafm.com/dronezone256.pls',
+    'DeepSpaceOne': 'https://somafm.com/deepspaceone130.pls',
+    'SpaceStationSoma': 'https://somafm.com/spacestation130.pls',
     'GrooveSalad': 'https://somafm.com/groovesalad256.pls',
     'GrooveSaladClassic': 'https://somafm.com/gsclassic130.pls',
+    'Black Rock FM': 'https://somafm.com/brfm130.pls',
     'n5MD': 'https://somafm.com/n5md130.pls',
-    'DeepSpaceOne': 'https://somafm.com/deepspaceone130.pls',
+    'DEF CON Radio': 'https://somafm.com/defcon130.pls',
+    'Synphaera Radio': 'https://somafm.com/synphaera130.pls',
+    'Covers': 'https://somafm.com/covers130.pls',
+    
     }
 
 app = Flask(__name__)
