@@ -7,3 +7,6 @@ This is a  little ditty to use Flask to launch my favourite SomaFM radio streams
 Although it can be triggered to start a stream using a browser or even CURL (like '$ curl http://claire.kenkl.org:5000/play?stream=DroneZone'), I've also assembled a companion application - [somafmcontroller](https://github.com/kenkl/somafmcontroller) to select the stream, change volume, or even stop the stream.
 
 
+2020-06-12: Refactored a bit to grab the full list of streams on startup and play from the stream id provided.
+
+

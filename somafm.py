@@ -2,35 +2,18 @@
 
 from flask import Flask,request
 from volumecontroller import *
-import subprocess, json
+import subprocess, json, requests
 
-streams = {
-    'DroneZone': 'https://somafm.com/dronezone256.pls',
-    'DeepSpaceOne': 'https://somafm.com/deepspaceone130.pls',
-    'SpaceStationSoma': 'https://somafm.com/spacestation130.pls',
-    'GrooveSalad': 'https://somafm.com/groovesalad256.pls',
-    'GrooveSaladClassic': 'https://somafm.com/gsclassic130.pls',
-    'Black Rock FM': 'https://somafm.com/brfm130.pls',
-    'n5MD': 'https://somafm.com/n5md130.pls',
-    'DEF CON Radio': 'https://somafm.com/defcon130.pls',
-    'Synphaera Radio': 'https://somafm.com/synphaera130.pls',
-    'Covers': 'https://somafm.com/covers130.pls',
-    
-    }
+URL = "https://somafm.com/channels.json"
+cl = []  # our simplified channel list
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    message = f"SomaFM player.\nCall with /play?stream=<StreamName>\nKnown Streams: {streamlistt()}\n"
+    message = f"SomaFM player.\nCall with /play?stream=<streamid>\n"
 
     return message
-
-@app.route('/dronezone')
-def playdz():
-    stopstream()
-    startstream('DroneZone')
-    return 'playing.\n'
 
 @app.route('/stop')
 def stop():
@@ -40,17 +23,16 @@ def stop():
 @app.route('/play')
 def play():
     call = request.args.get('stream', type=str)
-    #print(call)
-    #print(type(call))
     if not call == None:  # stream= has to exist
-        if call in streams:
+        url = get_url(call)
+        if not url == 'HONK':  # validate that we know about the streamid passed; don't try to play something unknown
             stopstream()
-            startstream(call)
-            return f'playing from {streams[call]}\n'
+            startstream(url)
+            return f'playing from {url}\n'
         else:
             return f"Can't play:\nStream '{call}' is unknown.\n"
     else:
-        return 'Syntax error. Call with:\n/play?stream=<StreamName>\n'
+        return 'Syntax error. Call with:\n/play?stream=<streamid>\n'
 
 @app.route('/vol')
 def fsetvol():  # the 'f' prefix avoids name collision with the volume module imported above
@@ -65,12 +47,12 @@ def fsetvol():  # the 'f' prefix avoids name collision with the volume module im
 @app.route('/volup')
 def fvolup():
     volup()
-    return f'volup {step}\n'
+    return f'{getvol()}\n'
 
 @app.route('/voldown')
 def fvoldown():
     voldown()
-    return f'voldown {step}\n'
+    return f'{getvol()}\n'
 
 @app.route('/togmute')
 def fmute():
@@ -79,13 +61,12 @@ def fmute():
 
 @app.route('/streamlist')
 def streamlist():
-    l  = app.make_response(json.dumps(streams))
+    l  = app.make_response(json.dumps(cl))
     l.mimetype = 'application/json'
     return l
 
-
-def startstream(streamname):
-    command = f'nohup mplayer -quiet -playlist {streams[streamname]} &'
+def startstream(url):
+    command = f'nohup mplayer -quiet -playlist {url} &'
     subprocess.call(command, shell=True)
 
 def stopstream():
@@ -93,17 +74,30 @@ def stopstream():
     subprocess.call('pkill mplayer', shell=True)
     subprocess.call('>nohup.out', shell=True)
 
-def streamlistt():
-    '''Simply returns a formatted list of known streams'''
-    streamnames=''
-    for key in streams.keys():
-        streamnames += key + ', '
+def make_cl():
+    global cl
+    c_raw = requests.get(URL)
+    c_raw.raise_for_status()
 
-    return streamnames
+    channels = json.loads(c_raw.text)
+    clist = channels['channels']
+
+    for i in clist:
+        c={'id': i['id'], 'title': i['title'], 'description': i['description'], 'playlist': i['playlists'][0]['url']}
+        cl.append(c)
+
+def get_url(streamid):
+    for i in range(len(cl)):
+        if cl[i]['id'] == streamid:
+            return cl[i]['playlist']
+    return 'HONK'
+
     
 
 if __name__ == '__main__':
     #app.run(debug=True)
+    subprocess.call('>nohup.out', shell=True)
+    make_cl()
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 
